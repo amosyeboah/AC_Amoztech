@@ -28,9 +28,10 @@ jobs:
         node-version: 20
         cache: 'npm'
 
-    - name: Accept Android SDK Licenses
+    - name: Accept Android SDK Licenses & Install SDK 35
       run: |
         yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
 
     - name: Install Dependencies & Sync Capacitor
       run: |
@@ -45,6 +46,13 @@ jobs:
         chmod +x gradlew
         ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee gradle.log || (echo "=== GRADLE FAILURE LOG ==="; tail -n 80 gradle.log; exit 1)
         cp app/build/outputs/apk/debug/app-debug.apk ../AC.apk
+
+    - name: Upload Logs on Failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: gradle-failure-log
+        path: android/gradle.log
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
