@@ -28,6 +28,10 @@ jobs:
         node-version: 20
         cache: 'npm'
 
+    - name: Accept Android SDK Licenses
+      run: |
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
     - name: Install Dependencies & Sync Capacitor
       run: |
         npm ci || npm install
@@ -37,8 +41,9 @@ jobs:
     - name: Build APK with Gradle Wrapper
       run: |
         cd android
+        echo "sdk.dir=$ANDROID_HOME" > local.properties
         chmod +x gradlew
-        ./gradlew assembleDebug --stacktrace --no-daemon
+        ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee gradle.log || (echo "=== GRADLE FAILURE LOG ==="; tail -n 80 gradle.log; exit 1)
         cp app/build/outputs/apk/debug/app-debug.apk ../AC.apk
 
     - name: Upload APK Artifact
