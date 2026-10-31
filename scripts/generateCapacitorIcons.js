@@ -213,4 +213,13 @@ if (fs.existsSync(vectorBg)) {
   console.log('Removed default Capacitor vector background');
 }
 
+// Ensure Capacitor build.gradle uses Java 17 for universal compiler compatibility
+const capBuildGradle = path.join(__dirname, '..', 'node_modules', '@capacitor', 'android', 'capacitor', 'build.gradle');
+if (fs.existsSync(capBuildGradle)) {
+  let content = fs.readFileSync(capBuildGradle, 'utf8');
+  content = content.replace(/JavaVersion\.VERSION_21/g, 'JavaVersion.VERSION_17');
+  fs.writeFileSync(capBuildGradle, content, 'utf8');
+  console.log('Patched Capacitor build.gradle to JavaVersion.VERSION_17');
+}
+
 console.log('ALL Capacitor Android icons & splash screens successfully branded with AC!');
