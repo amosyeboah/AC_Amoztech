@@ -36,8 +36,8 @@ jobs:
     - name: Install Dependencies & Sync Capacitor
       run: |
         npm ci || npm install
-        node scripts/generateCapacitorIcons.js
         npx cap sync android
+        node scripts/generateCapacitorIcons.js
 
     - name: Build APK with Gradle Wrapper
       run: |

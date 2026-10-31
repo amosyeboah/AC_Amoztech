@@ -219,7 +219,15 @@ if (fs.existsSync(capBuildGradle)) {
   let content = fs.readFileSync(capBuildGradle, 'utf8');
   content = content.replace(/JavaVersion\.VERSION_21/g, 'JavaVersion.VERSION_17');
   fs.writeFileSync(capBuildGradle, content, 'utf8');
-  console.log('Patched Capacitor build.gradle to JavaVersion.VERSION_17');
+  console.log('Patched Capacitor library build.gradle to JavaVersion.VERSION_17');
+}
+
+const capAppBuildGradle = path.join(__dirname, '..', 'android', 'app', 'capacitor.build.gradle');
+if (fs.existsSync(capAppBuildGradle)) {
+  let content = fs.readFileSync(capAppBuildGradle, 'utf8');
+  content = content.replace(/JavaVersion\.VERSION_21/g, 'JavaVersion.VERSION_17');
+  fs.writeFileSync(capAppBuildGradle, content, 'utf8');
+  console.log('Patched android/app/capacitor.build.gradle to JavaVersion.VERSION_17');
 }
 
 console.log('ALL Capacitor Android icons & splash screens successfully branded with AC!');
