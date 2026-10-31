@@ -1,0 +1,49 @@
+{
+  "name": "AC Financial Management",
+  "short_name": "AC",
+  "description": "Separate Entity Financial Management & Accounting Fence for Amos (AC Group)",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#04153B",
+  "theme_color": "#04153B",
+  "categories": ["finance", "productivity", "business"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Record Transaction",
+      "short_name": "Record",
+      "description": "Quickly record a payment or loan",
+      "url": "/#record",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "The Fence",
+      "short_name": "Fence",
+      "description": "View balances owed to/by Amos",
+      "url": "/#fence",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
+

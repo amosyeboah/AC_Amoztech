@@ -1,0 +1,1007 @@
+:root {
+  --royal-deep: #04153B;
+  --royal-mid: #08276B;
+  --royal-bright: #0052CC;
+  --royal-btn: #005CE6;
+  --cyan-brand: #18B2F7;
+  --amber-cta: #F39223;
+  --amber-hover: #E07D0E;
+  --emerald: #0D9488;
+  --emerald-bg: #ECFDF5;
+  --emerald-text: #065F46;
+  --crimson: #E11D48;
+  --crimson-bg: #FFF1F2;
+  --crimson-text: #9F1239;
+  --purple: #7C3AED;
+  --bg-page: #0B1938;
+  --bg-body: #EEF2F8;
+  --bg-card: #FFFFFF;
+  --bg-strip: #F2F4F8;
+  --border-light: #E2E8F0;
+  --border-input: #D1D5DB;
+  --text-main: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --shadow-card: 0 10px 28px rgba(4, 21, 59, 0.08), 0 2px 6px rgba(4, 21, 59, 0.04);
+  --shadow-elevated: 0 16px 36px rgba(4, 21, 59, 0.16);
+  --radius-xl: 22px;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+/* ================= MOBILE-FIRST APP CONTAINER ================= */
+.mobile-app-wrapper {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  background: var(--bg-body);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
+}
+
+/* ================= TOP ROYAL BLUE HEADER (Matches Reference Image) ================= */
+.mobile-header {
+  background: var(--royal-deep);
+  color: #FFFFFF;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.header-brand-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 800;
+  font-size: 1.55rem;
+  letter-spacing: -0.03em;
+}
+
+.brand-w-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.brand-letter-accent {
+  color: var(--cyan-brand);
+  font-weight: 900;
+}
+
+.brand-up-arrow {
+  width: 17px;
+  height: 17px;
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+}
+
+.brand-word {
+  color: var(--cyan-brand);
+  margin-left: 3px;
+}
+
+.header-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-install-btn {
+  background: rgba(24, 178, 247, 0.18);
+  border: 1px solid rgba(24, 178, 247, 0.4);
+  color: var(--cyan-brand);
+  padding: 6px 11px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.header-install-btn:hover {
+  background: rgba(24, 178, 247, 0.3);
+  color: #FFFFFF;
+}
+
+.header-install-btn.hidden {
+  display: none !important;
+}
+
+.drawer-action-btn.primary {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: var(--royal-bright);
+}
+
+/* Bag / Briefcase Icon Button with status dot */
+.header-bag-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.07);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.bag-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+}
+
+.bag-badge.warn {
+  background: var(--amber-cta);
+}
+
+/* Warm Orange Pill Button (Matches "Log in/Sign up" button in reference image) */
+.header-orange-cta {
+  background: linear-gradient(180deg, #F69D32 0%, #EA8311 100%);
+  color: #FFFFFF;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 11px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(243, 146, 35, 0.3);
+  white-space: nowrap;
+}
+
+.header-orange-cta:active {
+  transform: scale(0.97);
+}
+
+/* Three-line hamburger icon */
+.header-menu-btn {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 22px;
+  height: 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.header-menu-btn span {
+  display: block;
+  height: 2.2px;
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 4px;
+}
+
+/* ================= HERO BLUE BANNER (Matches "One shop, Multiple deals") ================= */
+.mobile-hero-banner {
+  background: radial-gradient(circle at 80% 20%, #0F4BC6 0%, #072260 65%, #04153B 100%);
+  padding: 16px 16px 26px;
+  color: #FFFFFF;
+}
+
+.hero-headline {
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #FFFFFF;
+  line-height: 1.25;
+}
+
+.hero-subtitle {
+  font-size: 0.82rem;
+  color: #BFDBFE;
+  margin-top: 4px;
+}
+
+/* ================= WAKANOW WHITE CARD (Matches Reference Image Exactly) ================= */
+.waka-card {
+  background: var(--bg-card);
+  border-radius: 20px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  margin: -14px 12px 16px;
+  border: 1px solid var(--border-light);
+  position: relative;
+  z-index: 10;
+}
+
+/* Recessed top icon tabs (Matches Flights / Hotels / Packages / Tours / Visa) */
+.waka-tabs-strip {
+  background: var(--bg-strip);
+  padding: 6px 8px 4px;
+  display: flex;
+  align-items: stretch;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.waka-tabs-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.waka-tab-item {
+  flex: 1;
+  min-width: 68px;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  padding: 9px 6px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+/* Lifted active rounded tab matching Flights in reference image */
+.waka-tab-item.active {
+  background: #FFFFFF;
+  color: var(--royal-bright);
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.waka-tab-icon {
+  font-size: 1.05rem;
+}
+
+/* Pill-Style Segmented Control (Matches "Round trip | One way | Multi-city") */
+.waka-pill-row {
+  display: flex;
+  align-items: center;
+  background: #F1F5F9;
+  border-radius: 999px;
+  gap: 5px;
+  margin: 12px 14px 14px;
+  border: 1px solid #E2E8F0;
+  padding: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.waka-pill-row::-webkit-scrollbar {
+  display: none;
+}
+
+.waka-pill {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: #475569;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.waka-pill.active {
+  background: var(--royal-bright);
+  color: #FFFFFF;
+  box-shadow: 0 3px 8px rgba(0, 82, 204, 0.3);
+}
+
+/* Form Container inside Card */
+.waka-form-content {
+  padding: 0 14px 16px;
+}
+
+/* Stacked FROM / TO Input Boxes with Overlapping Circular ⇅ Swap Button */
+.waka-stack-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.waka-field {
+  border: 1.5px solid var(--border-input);
+  border-radius: 14px;
+  padding: 9px 13px;
+  background: #FFFFFF;
+  transition: border-color 0.15s;
+}
+
+.waka-field:focus-within {
+  border-color: var(--royal-bright);
+  box-shadow: 0 0 0 2.5px rgba(0, 82, 204, 0.12);
+}
+
+.waka-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.waka-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.waka-icon {
+  font-size: 0.95rem;
+  color: #94A3B8;
+  flex-shrink: 0;
+}
+
+.waka-field input,
+.waka-field select {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main);
+  outline: none;
+}
+
+.waka-field input::placeholder {
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+/* Circular Swap Button (Matches exact ⇅ circle button in reference image) */
+.waka-swap-btn {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1.5px solid var(--border-input);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.1);
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  z-index: 5;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.waka-swap-btn:active {
+  transform: translate(-50%, -50%) rotate(180deg);
+  border-color: var(--royal-bright);
+  color: var(--royal-bright);
+}
+
+/* Split Box: DEPARTURE | RETURN */
+.waka-split-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1.5px solid var(--border-input);
+  border-radius: 14px;
+  background: #FFFFFF;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.waka-split-half {
+  padding: 9px 13px;
+}
+
+.waka-split-half:first-child {
+  border-right: 1.5px solid var(--border-input);
+}
+
+.waka-split-half input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-main);
+  outline: none;
+}
+
+/* Bottom Action Row (Matches [Economy ▾] + [Search flights]) */
+.waka-action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.waka-method-box {
+  border: 1.5px solid var(--border-input);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: #FFFFFF;
+  min-width: 110px;
+}
+
+.waka-method-box select {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+  outline: none;
+}
+
+/* Primary Royal Blue Pill Button (Matches [Search flights]) */
+.waka-submit-pill {
+  flex: 1;
+  background: linear-gradient(180deg, #005CE6 0%, #0044B3 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 999px;
+  padding: 14px 18px;
+  font-family: inherit;
+  font-size: 0.96rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 71, 179, 0.28);
+  transition: transform 0.15s;
+  text-align: center;
+}
+
+.waka-submit-pill:active {
+  transform: scale(0.98);
+}
+
+/* ================= MAIN SCROLLABLE SECTION ================= */
+.mobile-main {
+  flex: 1;
+  padding: 0 14px 80px;
+}
+
+/* ================= THE FENCE CARDS ================= */
+.fence-hero-card {
+  background: linear-gradient(135deg, #04153B 0%, #0B358E 100%);
+  color: #FFFFFF;
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-card);
+}
+
+.fence-badge-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #93C5FD;
+  margin-bottom: 8px;
+}
+
+.fence-net-val {
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
+  margin-bottom: 4px;
+}
+
+.fence-net-sub {
+  font-size: 0.82rem;
+  color: #DBEAFE;
+}
+
+.fence-split-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.fence-stat-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: 14px;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.fence-stat-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.fence-stat-num {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.fence-stat-num.owed-to-me { color: #0D9488; }
+.fence-stat-num.owed-by-me { color: #E11D48; }
+
+.fence-stat-sub {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* ================= CLEAN MOBILE TRANSACTION CARDS ================= */
+.mobile-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.m-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.m-card-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.m-card-amount {
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.m-card-sub {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.m-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.m-badge.blue { background: #DBEAFE; color: #1E40AF; }
+.m-badge.green { background: #D1FAE5; color: #065F46; }
+.m-badge.amber { background: #FEF3C7; color: #92400E; }
+.m-badge.red { background: #FFE4E6; color: #9F1239; }
+.m-badge.purple { background: #EDE9FE; color: #6D28D9; }
+.m-badge.slate { background: #F1F5F9; color: #334155; }
+
+.m-cat-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #475569;
+  background: #F1F5F9;
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.report-subtabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.report-subtab-btn {
+  flex: 1;
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: 1.5px solid #E2E8F0;
+  background: #FFFFFF;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748B;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.report-subtab-btn.active {
+  background: var(--royal-bright);
+  border-color: var(--royal-bright);
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(0, 82, 204, 0.22);
+}
+
+.cat-progress-track {
+  height: 8px;
+  background: #F1F5F9;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.cat-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* Quick Settle Button on Mobile Card */
+.btn-m-settle {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ================= FIXED NATIVE BOTTOM NAVIGATION BAR ================= */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  height: 64px;
+  background: #FFFFFF;
+  border-top: 1px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 100;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-tab-btn {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: #64748B;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.bottom-tab-btn .b-icon {
+  font-size: 1.15rem;
+}
+
+.bottom-tab-btn.active {
+  color: var(--royal-bright);
+  font-weight: 800;
+}
+
+.bottom-tab-btn.active .b-icon {
+  transform: translateY(-1px);
+}
+
+/* ================= SLIDE-OVER DRAWER ================= */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 21, 59, 0.6);
+  z-index: 200;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer-backdrop.hidden {
+  display: none;
+}
+
+.drawer-content {
+  width: 82%;
+  max-width: 320px;
+  height: 100%;
+  background: #FFFFFF;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-header {
+  background: var(--royal-deep);
+  color: #FFFFFF;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.drawer-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.drawer-sub {
+  font-size: 0.72rem;
+  color: #93C5FD;
+}
+
+.drawer-close-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #FFFFFF;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.drawer-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.drawer-section {
+  margin-bottom: 20px;
+}
+
+.drawer-section-title {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.drawer-action-btn {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  color: #334155;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: left;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.drawer-action-btn:active {
+  background: #E2E8F0;
+}
+
+.drawer-action-btn.danger {
+  color: #E11D48;
+}
+
+.fence-rule-pill {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  padding: 8px 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--royal-bright);
+}
+
+/* ================= MODAL & TOAST ================= */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 21, 59, 0.65);
+  backdrop-filter: blur(3px);
+  z-index: 250;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.modal-backdrop.hidden {
+  display: none;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 480px;
+  background: #FFFFFF;
+  border-radius: 20px 20px 0 0;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  background: var(--royal-deep);
+  color: #FFFFFF;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-close {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #FFFFFF;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 18px;
+}
+
+.toast-container {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 420px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--royal-deep);
+  color: #FFFFFF;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border-left: 4px solid var(--amber-cta);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* ================= DASHBOARD & REPORT STYLES ================= */
+.dash-kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.dash-kpi-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: 13px 14px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dash-kpi-title {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.dash-kpi-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.dash-kpi-sub {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.report-table td {
+  padding: 9px 8px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.report-table tr.total-row td {
+  font-weight: 800;
+  border-top: 1.5px solid #CBD5E1;
+  border-bottom: 2px solid #CBD5E1;
+  background: #F8FAFC;
+}
+
+@media print {
+  body {
+    background: #FFFFFF;
+  }
+  .mobile-app-wrapper {
+    max-width: 100%;
+    box-shadow: none;
+  }
+  .mobile-header, .mobile-bottom-nav, .waka-card, .btn-m-settle, .header-orange-cta {
+    display: none !important;
+  }
+}
+
