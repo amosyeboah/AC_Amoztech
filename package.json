@@ -8,6 +8,9 @@
     "test": "node --test tests/accounting.test.js"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^7.6.10",
+    "@capacitor/core": "^8.6.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "sql.js": "^1.13.0"

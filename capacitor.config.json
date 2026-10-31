@@ -1,0 +1,8 @@
+{
+  "appId": "com.amoztech.ac",
+  "appName": "AC",
+  "webDir": "public",
+  "server": {
+    "androidScheme": "https"
+  }
+}

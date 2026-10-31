@@ -1,4 +1,4 @@
-name: Build and Release Android APK
+name: Build and Release Capacitor Android APK
 
 on:
   push:
@@ -16,42 +16,50 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Set up Java 17
+    - name: Set up Java 21
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '17'
+        java-version: '21'
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        gradle-version: '8.5'
+        node-version: 20
+        cache: 'npm'
 
-    - name: Build APK with Gradle
+    - name: Install Dependencies & Sync Capacitor
+      run: |
+        npm ci || npm install
+        node scripts/generateCapacitorIcons.js
+        npx cap sync android
+
+    - name: Build APK with Gradle Wrapper
       run: |
         cd android
-        echo "sdk.dir=$ANDROID_HOME" > local.properties
-        gradle assembleDebug --stacktrace --no-daemon
+        chmod +x gradlew
+        ./gradlew assembleDebug --stacktrace --no-daemon
         cp app/build/outputs/apk/debug/app-debug.apk ../AC.apk
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: AC-debug-app
+        name: AC-Capacitor-debug
         path: AC.apk
 
-    - name: Create GitHub Release
+    - name: Update GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: v1.0.0
-        name: "AC Mobile App v1.0.0"
+        name: "AC Mobile App v1.0.0 (Capacitor)"
         body: |
           ### AC Mobile Financial Management App
+          - **Powered by Capacitor 7**
+          - App Name: **AC**
+          - Custom Branded App Icon (AC Royal Blue & Cyan)
           - Parent Company: **AmozTech**
           - Owner: **Amos**
-          - 100% Standalone & Offline Native Android APK
-          - Separate Entity Concept & Double-Entry Ledger
-          - Wakanow Mobile Visual Design
+          - 100% Offline Separate Entity Accounting Engine
         files: AC.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
