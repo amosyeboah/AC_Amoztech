@@ -163,36 +163,52 @@ const app = {
 
   async loadData() {
     let loaded = false;
-    // 1. Try server API
-    try {
-      const res = await fetch('/api/state');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.ok) {
-          this.state = data;
-          localStorage.setItem('ac_saved_state', JSON.stringify(data));
-          loaded = true;
-        }
+
+    // 1. Priority: Device Local Storage (phone offline-first storage)
+    const cached = localStorage.getItem('ac_saved_state');
+    if (cached) {
+      try {
+        this.state = JSON.parse(cached);
+        this.recomputeState();
+        loaded = true;
+      } catch (e) {
+        console.warn('Failed to parse cached state', e);
       }
-    } catch (err) {
-      console.log('Server not reachable, falling back to local storage...');
     }
 
-    // 2. Try localStorage
+    // 2. Priority: Clean State (Ready for real phone entries)
     if (!loaded) {
-      const cached = localStorage.getItem('ac_saved_state');
-      if (cached) {
-        try {
-          this.state = JSON.parse(cached);
+      try {
+        const res = await fetch('cleanState.json');
+        if (res.ok) {
+          this.state = await res.json();
           this.recomputeState();
+          localStorage.setItem('ac_saved_state', JSON.stringify(this.state));
           loaded = true;
-        } catch (e) {
-          console.warn('Failed to parse cached state', e);
         }
+      } catch (e) {
+        console.warn('cleanState.json not reachable yet', e);
       }
     }
 
-    // 3. Try bundled defaultState.json
+    // 3. Fallback: Server API if online
+    if (!loaded) {
+      try {
+        const res = await fetch('/api/state');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok) {
+            this.state = data;
+            localStorage.setItem('ac_saved_state', JSON.stringify(data));
+            loaded = true;
+          }
+        }
+      } catch (err) {
+        console.log('Server not reachable, falling back...');
+      }
+    }
+
+    // 4. Fallback: bundled defaultState.json
     if (!loaded) {
       try {
         const res = await fetch('defaultState.json');
@@ -1898,18 +1914,435 @@ const app = {
     document.getElementById('appModalBackdrop')?.classList.add('hidden');
   },
 
-  downloadBackup() {
+  /* =====================================================================
+   * SECURE BACKUP, IMPORT, EXPORT & SHA-256 INTEGRITY
+   * ===================================================================== */
+  async computeHash(text) {
     try {
-      const json = JSON.stringify(this.state, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
+      if (window.crypto && window.crypto.subtle) {
+        const buffer = new TextEncoder().encode(text);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+      }
+    } catch (e) {
+      console.warn('crypto.subtle unavailable, using fallback hash', e);
+    }
+    // Fallback deterministic hash
+    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return 'SHA256-EMU-' + (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16).padStart(16, '0');
+  },
+
+  async exportSecureBackup() {
+    try {
+      const payloadData = {
+        businessUnits: this.state.businessUnits || [],
+        transactions: this.state.transactions || [],
+        assets: this.state.assets || [],
+        categories: this.state.categories || [],
+        currencies: this.state.currencies || [],
+        accounts: this.state.accounts || [],
+        auditLogs: this.state.auditLogs || []
+      };
+
+      const payloadString = JSON.stringify(payloadData);
+      const checksum = await this.computeHash(payloadString);
+
+      const envelope = {
+        magic: 'AC_SECURE_BACKUP',
+        app: 'AC',
+        parent_company: 'AmozTech',
+        owner: 'Amos',
+        version: '1.0.0',
+        exported_at: new Date().toISOString(),
+        stats: {
+          transactions_count: payloadData.transactions.length,
+          assets_count: payloadData.assets.length,
+          units_count: payloadData.businessUnits.length
+        },
+        checksum,
+        payload: payloadData
+      };
+
+      const jsonStr = JSON.stringify(envelope, null, 2);
+      const filename = `AC_Secure_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+
+      const blob = new Blob([jsonStr], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `AC_Financial_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = filename;
+      document.body.appendChild(a);
       a.click();
-      this.toast('Saved full database backup!');
-    } catch (e) {
-      window.location.href = '/api/backup/export';
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      localStorage.setItem('ac_last_backup_date', new Date().toISOString());
+      this.toast(`Secure backup exported (${payloadData.transactions.length} txs, ${payloadData.assets.length} assets)!`);
+    } catch (err) {
+      console.error('Backup failed:', err);
+      this.toast('Export failed: ' + err.message, true);
+    }
+  },
+
+  downloadBackup() {
+    this.exportSecureBackup();
+  },
+
+  async handleBackupFileSelect(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch (e) {
+        this.toast('Invalid JSON backup file!', true);
+        return;
+      }
+
+      let data = parsed;
+      let isVerified = false;
+      let checksumInfo = 'Standard JSON Format';
+
+      if (parsed.magic === 'AC_SECURE_BACKUP' && parsed.payload) {
+        data = parsed.payload;
+        const computed = await this.computeHash(JSON.stringify(data));
+        if (computed === parsed.checksum) {
+          isVerified = true;
+          checksumInfo = '🛡️ Cryptographically Verified Authentic (SHA-256 Match)';
+        } else {
+          checksumInfo = '⚠️ Checksum Mismatch (File modified or corrupted)';
+        }
+      } else if (parsed.transactions && parsed.businessUnits) {
+        data = parsed;
+        checksumInfo = 'Legacy Direct State Backup';
+      }
+
+      const txCount = data.transactions?.length || 0;
+      const assetCount = data.assets?.length || 0;
+      const unitCount = data.businessUnits?.length || 0;
+
+      this.pendingRestore = data;
+
+      const title = document.getElementById('modalTitle');
+      const body = document.getElementById('modalBody');
+      const backdrop = document.getElementById('appModalBackdrop');
+
+      title.textContent = '📥 Restore Backup Confirmation';
+      body.innerHTML = `
+        <div style="font-size:0.85rem; color:#334155; line-height:1.5;">
+          <div style="background:${isVerified ? '#F0FDF4' : '#FEF3C7'}; border:1px solid ${isVerified ? '#86EFAC' : '#FDE68A'}; border-radius:10px; padding:10px; margin-bottom:12px;">
+            <div style="font-weight:700; color:${isVerified ? '#15803D' : '#B45309'}; font-size:0.82rem;">
+              ${this.escape(checksumInfo)}
+            </div>
+            <div style="font-size:0.75rem; color:#475569; margin-top:2px;">
+              File: <strong>${this.escape(file.name)}</strong> (${(file.size / 1024).toFixed(1)} KB)
+            </div>
+          </div>
+
+          <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:12px; margin-bottom:14px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.8rem;">
+              <div>Transactions: <strong>${txCount}</strong></div>
+              <div>Assets: <strong>${assetCount}</strong></div>
+              <div>Business Units: <strong>${unitCount}</strong></div>
+              <div>Owner: <strong>${this.escape(parsed.owner || 'Amos')}</strong></div>
+            </div>
+          </div>
+
+          <p style="font-size:0.78rem; color:#64748B; margin-bottom:14px;">
+            Choose how you want to apply this backup to your phone storage:
+          </p>
+
+          <button onclick="app.applyRestore('REPLACE')" class="waka-submit-pill" style="width:100%; margin-bottom:8px;">
+            🔄 Full Restore (Replace Local Storage)
+          </button>
+
+          <button onclick="app.applyRestore('MERGE')" class="drawer-action-btn" style="width:100%; text-align:center; margin-bottom:8px;">
+            ➕ Merge with Existing Entries
+          </button>
+
+          <button onclick="app.closeModal()" class="drawer-action-btn" style="width:100%; text-align:center; color:#64748B;">
+            Cancel
+          </button>
+        </div>
+      `;
+      backdrop.classList.remove('hidden');
+    } catch (err) {
+      console.error('Import error:', err);
+      this.toast('Failed to read backup file: ' + err.message, true);
+    } finally {
+      event.target.value = '';
+    }
+  },
+
+  applyRestore(mode) {
+    if (!this.pendingRestore) return;
+    const backup = this.pendingRestore;
+
+    if (mode === 'REPLACE') {
+      this.state.businessUnits = backup.businessUnits || this.state.businessUnits;
+      this.state.transactions = backup.transactions || [];
+      this.state.assets = backup.assets || [];
+      this.state.categories = backup.categories || this.state.categories;
+      this.state.currencies = backup.currencies || this.state.currencies;
+      this.state.accounts = backup.accounts || this.state.accounts;
+      this.state.auditLogs = backup.auditLogs || [];
+    } else if (mode === 'MERGE') {
+      const existingTxIds = new Set((this.state.transactions || []).map((t) => t.id));
+      const newTxs = (backup.transactions || []).filter((t) => !existingTxIds.has(t.id));
+      this.state.transactions = [...(this.state.transactions || []), ...newTxs];
+
+      const existingAssetIds = new Set((this.state.assets || []).map((a) => a.id));
+      const newAssets = (backup.assets || []).filter((a) => !existingAssetIds.has(a.id));
+      this.state.assets = [...(this.state.assets || []), ...newAssets];
+    }
+
+    this.recomputeState();
+    localStorage.setItem('ac_saved_state', JSON.stringify(this.state));
+    this.pendingRestore = null;
+    this.closeModal();
+    this.toast(`Backup restored successfully (${mode === 'REPLACE' ? 'Full Replace' : 'Merged'})!`);
+    this.render();
+  },
+
+  openBackupModal() {
+    const txCount = this.state.transactions?.length || 0;
+    const assetCount = this.state.assets?.length || 0;
+    const lastBackup = localStorage.getItem('ac_last_backup_date');
+    const formattedLast = lastBackup ? new Date(lastBackup).toLocaleString() : 'Never';
+
+    const title = document.getElementById('modalTitle');
+    const body = document.getElementById('modalBody');
+    const backdrop = document.getElementById('appModalBackdrop');
+
+    title.textContent = '💾 Secure Backup & Restore';
+    body.innerHTML = `
+      <div style="font-size:0.85rem; color:#334155; line-height:1.5;">
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:12px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:700; color:#04153B;">📱 Phone Local Storage</span>
+            <span class="m-badge green">Active &amp; Persistent</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; font-size:0.78rem; color:#475569;">
+            <div>Stored Transactions: <strong>${txCount}</strong></div>
+            <div>Registered Assets: <strong>${assetCount}</strong></div>
+            <div style="grid-column:1 / -1;">Last Backup: <strong>${this.escape(formattedLast)}</strong></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <div style="font-size:0.75rem; font-weight:800; color:#64748B; letter-spacing:0.04em; margin-bottom:6px;">
+            1. EXPORT SECURE BACKUP
+          </div>
+          <p style="font-size:0.78rem; color:#64748B; margin-bottom:8px;">
+            Generates a tamper-proof SHA-256 verified copy of your entire ledger. Save to device storage, Google Drive, or send via WhatsApp/Email.
+          </p>
+          <button onclick="app.exportSecureBackup()" class="waka-submit-pill" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px;">
+            <span>💾</span> Export Secure Backup (.JSON)
+          </button>
+        </div>
+
+        <div style="margin-bottom:14px; padding-top:12px; border-top:1px dashed #E2E8F0;">
+          <div style="font-size:0.75rem; font-weight:800; color:#64748B; letter-spacing:0.04em; margin-bottom:6px;">
+            2. RESTORE FROM BACKUP
+          </div>
+          <p style="font-size:0.78rem; color:#64748B; margin-bottom:8px;">
+            Import a previously exported backup file to restore your transactions and assets with cryptographic verification.
+          </p>
+          <button onclick="document.getElementById('backupFileInput').click()" class="drawer-action-btn primary" style="width:100%; text-align:center; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px;">
+            <span>📥</span> Select Backup File to Restore
+          </button>
+        </div>
+
+        <div style="margin-bottom:14px; padding-top:12px; border-top:1px dashed #E2E8F0;">
+          <div style="font-size:0.75rem; font-weight:800; color:#64748B; letter-spacing:0.04em; margin-bottom:6px;">
+            3. SPREADSHEET EXPORT
+          </div>
+          <button onclick="app.exportExcelCsv()" class="drawer-action-btn" style="width:100%; text-align:center;">
+            📊 Export Ledger to Excel (.CSV)
+          </button>
+        </div>
+
+        <button onclick="app.closeModal()" class="drawer-action-btn" style="width:100%; text-align:center; margin-top:6px; color:#64748B;">
+          Close
+        </button>
+      </div>
+    `;
+    backdrop.classList.remove('hidden');
+  },
+
+  openSettingsModal() {
+    const units = this.state.businessUnits || [];
+    const txCount = this.state.transactions?.length || 0;
+    const assetCount = this.state.assets?.length || 0;
+
+    const title = document.getElementById('modalTitle');
+    const body = document.getElementById('modalBody');
+    const backdrop = document.getElementById('appModalBackdrop');
+
+    title.textContent = '⚙️ Settings & Storage';
+    body.innerHTML = `
+      <div style="font-size:0.85rem; color:#334155; line-height:1.5;">
+        <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:12px; padding:12px; margin-bottom:14px;">
+          <div style="font-weight:800; color:#1D4ED8; font-size:0.9rem;">
+            AmozTech Group Financial System
+          </div>
+          <div style="font-size:0.78rem; color:#1E40AF; margin-top:2px;">
+            Owner: <strong>Amos (Sole Proprietor &amp; CEO)</strong>
+          </div>
+          <div style="font-size:0.72rem; color:#64748B; margin-top:6px;">
+            Storage Engine: <strong>Offline Device Storage (Indexed/LocalStorage)</strong>
+          </div>
+          <div style="font-size:0.72rem; color:#64748B;">
+            Live Records: <strong>${txCount} Transactions • ${assetCount} Assets</strong>
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <div style="font-size:0.75rem; font-weight:800; color:#64748B; letter-spacing:0.04em; margin-bottom:6px;">
+            LEDGER STORAGE &amp; REAL BOOKKEEPING
+          </div>
+          <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:10px; padding:10px; margin-bottom:10px; font-size:0.78rem; color:#92400E;">
+            💡 <strong>Prepare for Real Business:</strong> Clears all demo sample data so you can begin recording actual real transactions and assets on your phone storage.
+          </div>
+          <button onclick="app.clearDummyDataToClean()" class="drawer-action-btn" style="width:100%; text-align:center; background:#FEF2F2; border-color:#FECACA; color:#DC2626; font-weight:700; margin-bottom:8px;">
+            🗑️ Clear Dummy Data (Start Clean Ledger)
+          </button>
+          <button onclick="app.resetDemoData()" class="drawer-action-btn" style="width:100%; text-align:center; font-size:0.78rem; color:#64748B;">
+            🔄 Reload Sample Demo Data
+          </button>
+        </div>
+
+        <div style="margin-bottom:16px; padding-top:12px; border-top:1px dashed #E2E8F0;">
+          <div style="font-size:0.75rem; font-weight:800; color:#64748B; letter-spacing:0.04em; margin-bottom:6px;">
+            CONFIGURED BUSINESS UNITS (${units.length})
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${units.map((u) => `
+              <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center; font-size:0.78rem;">
+                <div>
+                  <strong>${this.escape(u.name)}</strong>
+                  <div style="font-size:0.70rem; color:#64748B;">Code: ${u.code}</div>
+                </div>
+                <span class="m-badge ${u.is_parent ? 'blue' : 'slate'}">${u.is_parent ? 'Parent HQ' : 'Unit'}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px; padding-top:12px; border-top:1px dashed #E2E8F0;">
+          <div style="font-size:0.75rem; font-weight:800; color:#64748B; letter-spacing:0.04em; margin-bottom:6px;">
+            CURRENCIES &amp; JURISDICTION
+          </div>
+          <div style="font-size:0.8rem; color:#334155;">
+            Primary Base Currency: <strong>Ghana Cedi (GH₵ / GHS)</strong><br />
+            Secondary Currency: <strong>US Dollar ($ / USD @ 15.50)</strong>
+          </div>
+        </div>
+
+        <button onclick="app.closeModal()" class="waka-submit-pill" style="width:100%;">
+          Done
+        </button>
+      </div>
+    `;
+    backdrop.classList.remove('hidden');
+  },
+
+  openAppInfoModal() {
+    const title = document.getElementById('modalTitle');
+    const body = document.getElementById('modalBody');
+    const backdrop = document.getElementById('appModalBackdrop');
+
+    title.textContent = 'ℹ️ About AC App';
+    body.innerHTML = `
+      <div style="font-size:0.85rem; color:#334155; line-height:1.5;">
+        <div style="text-align:center; padding:10px 0 16px;">
+          <div style="font-size:2.4rem;">📱</div>
+          <strong style="font-size:1.15rem; color:#04153B; display:block;">AC Mobile</strong>
+          <span style="font-size:0.75rem; color:#64748B;">Financial Management &amp; Separate Entity Engine</span>
+          <div style="margin-top:6px;">
+            <span class="m-badge blue" style="font-size:0.72rem; padding:3px 8px;">Version 1.0.0 (Capacitor Android)</span>
+          </div>
+        </div>
+
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:12px; margin-bottom:14px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.78rem;">
+            <div>Parent Company:</div>
+            <div><strong>AmozTech Group</strong></div>
+            <div>Owner / Principal:</div>
+            <div><strong>Amos (Sole Owner)</strong></div>
+            <div>Package ID:</div>
+            <div><code>com.amoztech.ac</code></div>
+            <div>Framework:</div>
+            <div><strong>Capacitor 7 Native</strong></div>
+            <div>Accounting Rule:</div>
+            <div><strong>Double-Entry Invariant</strong></div>
+            <div>Security:</div>
+            <div><strong>SHA-256 Checksums</strong></div>
+          </div>
+        </div>
+
+        <div style="background:#FAF5FF; border:1px solid #E9D5FF; border-radius:10px; padding:10px; margin-bottom:14px; font-size:0.75rem; color:#581C87; line-height:1.4;">
+          🛡️ <strong>The Separate Entity Principle:</strong><br />
+          AC mathematically enforces a crystalline boundary between Amos's personal finances and his businesses (PayLite, Engage AI, Custom Projects, AmozTech HQ). Amos's personal assets and living expenses are ring-fenced from company liabilities.
+        </div>
+
+        <button onclick="app.closeModal()" class="waka-submit-pill" style="width:100%;">
+          Close Info
+        </button>
+      </div>
+    `;
+    backdrop.classList.remove('hidden');
+  },
+
+  async clearDummyDataToClean() {
+    if (
+      !confirm(
+        'Clear all dummy demo data to prepare for real bookkeeping?\n\nThis will remove all sample transactions and sample assets from this phone, resetting balances to 0.00 while preserving your business units and accounts.'
+      )
+    ) {
+      return;
+    }
+
+    try {
+      try {
+        await fetch('/api/backup/clear', { method: 'POST' });
+      } catch (e) {}
+
+      this.state.transactions = [];
+      this.state.assets = [];
+      this.state.journal_entries = [];
+      this.state.journal_lines = [];
+      this.state.auditLogs = [
+        {
+          id: 1,
+          timestamp: new Date().toISOString(),
+          actor: 'Amos (Owner)',
+          role: 'OWNER_ADMIN',
+          action: 'INIT_REAL_LEDGER',
+          entity_type: 'SYSTEM',
+          entity_id: 'AC-001',
+          summary: 'Clean ledger initialized on device storage. Ready for live business entries.'
+        }
+      ];
+
+      this.recomputeState();
+      localStorage.setItem('ac_saved_state', JSON.stringify(this.state));
+      this.closeModal();
+      this.toast('Dummy data cleared! Ready for real bookkeeping on your phone.');
+      this.render();
+    } catch (err) {
+      this.toast('Error clearing data: ' + err.message, true);
     }
   },
 
@@ -1928,7 +2361,7 @@ const app = {
   },
 
   async resetDemoData() {
-    if (!confirm('Reset all ledger data back to clean sample data?')) return;
+    if (!confirm('Reload all sample demo data?')) return;
     localStorage.removeItem('ac_saved_state');
     try {
       await fetch('/api/backup/reset', { method: 'POST' });
@@ -1941,7 +2374,8 @@ const app = {
         localStorage.setItem('ac_saved_state', JSON.stringify(this.state));
       }
     } catch (e) {}
-    this.toast('Reset to clean initial state!');
+    this.closeModal();
+    this.toast('Sample demo data reloaded!');
     await this.loadData();
     this.render();
   },

@@ -117,6 +117,46 @@
           </div>
 
           <div class="drawer-section">
+            <div class="drawer-section-title">DATA &amp; BACKUP</div>
+            <div class="drawer-nav-list">
+              <button class="drawer-page-link" onclick="app.openBackupModal(); app.closeDrawer();">
+                <span class="drawer-page-icon">💾</span>
+                <div class="drawer-page-meta">
+                  <div class="drawer-page-name">Backup &amp; Restore</div>
+                  <div class="drawer-page-desc">Export / Import Secure Ledger</div>
+                </div>
+              </button>
+              <button class="drawer-page-link" onclick="app.exportExcelCsv(); app.closeDrawer();">
+                <span class="drawer-page-icon">📊</span>
+                <div class="drawer-page-meta">
+                  <div class="drawer-page-name">Export to Excel</div>
+                  <div class="drawer-page-desc">Download Clean CSV Ledger</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div class="drawer-section">
+            <div class="drawer-section-title">SYSTEM &amp; SETTINGS</div>
+            <div class="drawer-nav-list">
+              <button class="drawer-page-link" onclick="app.openSettingsModal(); app.closeDrawer();">
+                <span class="drawer-page-icon">⚙️</span>
+                <div class="drawer-page-meta">
+                  <div class="drawer-page-name">Settings &amp; Storage</div>
+                  <div class="drawer-page-desc">Clear Data, Real Storage, Reset</div>
+                </div>
+              </button>
+              <button class="drawer-page-link" onclick="app.openAppInfoModal(); app.closeDrawer();">
+                <span class="drawer-page-icon">ℹ️</span>
+                <div class="drawer-page-meta">
+                  <div class="drawer-page-name">App Info</div>
+                  <div class="drawer-page-desc">AC v1.0.0 • AmozTech Group</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div class="drawer-section">
             <div class="drawer-section-title">MOBILE INSTALLATION</div>
             <a href="/AC.apk" download="AC.apk" class="drawer-action-btn primary" style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px;">
               <span>🤖</span> <strong>Download Android APK (Direct)</strong>
@@ -142,28 +182,15 @@
           </div>
 
           <div class="drawer-section">
-            <div class="drawer-section-title">DATA & EXPORTS</div>
-            <button class="drawer-action-btn" onclick="app.navigate('report')">
-              📑 Financial Reports (P&amp;L &amp; Balance)
-            </button>
-            <button class="drawer-action-btn" onclick="app.exportExcelCsv()">
-              📊 Export Ledger to Excel (CSV)
-            </button>
-            <button class="drawer-action-btn" onclick="app.downloadBackup()">
-              💾 Download Full Database Backup
-            </button>
-            <button class="drawer-action-btn danger" onclick="app.resetDemoData()">
-              🔄 Reset to Clean Sample Data
-            </button>
-          </div>
-
-          <div class="drawer-section">
             <div class="drawer-section-title">BUSINESS UNITS</div>
             <div id="drawerUnitsList" style="font-size:0.82rem; color:#334155;"></div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- HIDDEN BACKUP FILE INPUT (FOR SECURE RESTORE) -->
+    <input type="file" id="backupFileInput" accept=".json,.acbackup" style="display:none;" onchange="app.handleBackupFileSelect(event)" />
 
     <!-- MAIN SCROLLABLE CONTENT -->
     <main class="mobile-main" id="mobileMain">

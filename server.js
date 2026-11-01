@@ -9,7 +9,8 @@ const {
   runStmt,
   recordAudit,
   insertTransactionWithJournal,
-  resetToSampleData
+  resetToSampleData,
+  clearToCleanData
 } = require('./src/db/database');
 const {
   computeFinancialState,
@@ -697,12 +698,23 @@ app.get('/api/backup/export', async (req, res) => {
   }
 });
 
-// POST /api/backup/reset -> Reset database to clean sample state
+// POST /api/backup/reset -> Reset database to sample demo state
 app.post('/api/backup/reset', async (req, res) => {
   try {
     await getDb();
     resetToSampleData();
-    res.json({ ok: true, message: 'Sample data restored successfully.' });
+    res.json({ ok: true, message: 'Sample demo data restored successfully.' });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// POST /api/backup/clear -> Clear all dummy data and start fresh for real bookkeeping
+app.post('/api/backup/clear', async (req, res) => {
+  try {
+    await getDb();
+    clearToCleanData();
+    res.json({ ok: true, message: 'All dummy data cleared. Ready for real phone bookkeeping.' });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }

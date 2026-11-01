@@ -330,7 +330,7 @@ function insertTransactionWithJournal(database, txInput, actor = 'Amos (Owner)',
   return insertedTx;
 }
 
-function seedDatabase(database) {
+function seedStructure(database) {
   // 1. Users & RBAC
   const users = [
     {
@@ -479,6 +479,10 @@ function seedDatabase(database) {
       [cat.name, cat.flow, cat.sub, cat.acc, cat.desc]
     );
   }
+}
+
+function seedDatabase(database) {
+  seedStructure(database);
 
   // Unit IDs: 1 = AmozTech HQ, 2 = PayLite, 3 = Engage AI, 4 = Custom Projects
   const sampleTransactions = [
@@ -1096,6 +1100,25 @@ function resetToSampleData() {
   return db;
 }
 
+function clearToCleanData() {
+  if (fs.existsSync(DB_FILE)) {
+    fs.unlinkSync(DB_FILE);
+  }
+  db = new SQL.Database();
+  initializeSchema(db);
+  seedStructure(db);
+  recordAudit(db, {
+    actor: 'Amos (Owner)',
+    role: 'OWNER_ADMIN',
+    action: 'INITIALIZE_CLEAN_LEDGER',
+    entityType: 'SYSTEM',
+    entityId: 'AMOZTECH-CORE',
+    summary: 'Clean ledger initialized on device storage. Ready for real company transactions.'
+  });
+  persistDb();
+  return db;
+}
+
 module.exports = {
   getDb,
   persistDb,
@@ -1105,6 +1128,7 @@ module.exports = {
   recordAudit,
   insertTransactionWithJournal,
   resetToSampleData,
+  clearToCleanData,
   DB_FILE
 };
 
