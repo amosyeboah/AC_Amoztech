@@ -1005,3 +1005,178 @@ body {
   }
 }
 
+/* ================= DRAWER NAVIGATION LINKS ================= */
+.drawer-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.drawer-page-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  color: #1E293B;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.drawer-page-link:hover, .drawer-page-link:active {
+  background: #EFF6FF;
+  border-color: #93C5FD;
+  color: var(--royal-bright);
+}
+
+.drawer-page-link.active {
+  background: #04153B;
+  border-color: #04153B;
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(4, 21, 59, 0.2);
+}
+
+.drawer-page-link .drawer-page-icon {
+  font-size: 1.25rem;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.drawer-page-link .drawer-page-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.drawer-page-link .drawer-page-name {
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.drawer-page-link .drawer-page-desc {
+  font-size: 0.70rem;
+  color: #64748B;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.drawer-page-link.active .drawer-page-desc {
+  color: #93C5FD;
+}
+
+/* ================= ASSET REGISTER STYLING ================= */
+.asset-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.asset-stat-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.asset-stat-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #64748B;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.asset-stat-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #04153B;
+}
+
+.asset-stat-sub {
+  font-size: 0.68rem;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.asset-owner-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 100px;
+}
+
+.asset-owner-pill.amos {
+  background: #F3E8FF;
+  color: #6B21A8;
+  border: 1px solid #D8B4FE;
+}
+
+.asset-owner-pill.biz {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.asset-legal-fence-box {
+  background: #FAF5FF;
+  border: 1px dashed #D8B4FE;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  color: #581C87;
+  margin-top: 8px;
+  line-height: 1.35;
+}
+
+.asset-corp-fence-box {
+  background: #F0FDF4;
+  border: 1px dashed #86EFAC;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  color: #166534;
+  margin-top: 8px;
+  line-height: 1.35;
+}
+
+.asset-metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  margin: 8px 0;
+  font-size: 0.75rem;
+}
+
+.asset-metric-item {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dotted #E2E8F0;
+  padding: 3px 0;
+}
+
+.asset-metric-item span:first-child {
+  color: #64748B;
+}
+
+.asset-metric-item span:last-child {
+  font-weight: 700;
+  color: #1E293B;
+}
+
+

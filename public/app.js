@@ -43,13 +43,16 @@ const REVENUE_CATEGORIES = [
 
 const app = {
   state: null,
-  activeTab: 'dashboard', // 'dashboard' | 'record' | 'report' | 'activity'
+  activeTab: 'dashboard', // 'dashboard' | 'record' | 'assets' | 'report' | 'activity'
   activeFlow: 'AMOS_TO_BUSINESS',
   activeSubtype: 'OWNER_LOAN',
   searchQuery: '',
   filterCategoryType: 'ALL',
   reportPeriod: 'ALL', // 'ALL' | 'MONTH' | 'QTR' | 'YEAR'
   reportSubTab: 'CATEGORIES', // 'CATEGORIES' | 'STATEMENT'
+  assetFilter: 'ALL', // 'ALL' | 'AMOS_PERSONAL' | 'BUSINESS'
+  assetUnitFilter: 'ALL', // 'ALL' | unit_id
+  assetSearchQuery: '',
   deferredPrompt: null,
 
   form: {
@@ -251,6 +254,9 @@ const app = {
     document.querySelectorAll('.bottom-tab-btn').forEach((btn) => {
       btn.classList.toggle('active', btn.dataset.tab === tab);
     });
+    document.querySelectorAll('.drawer-page-link').forEach((link) => {
+      link.classList.toggle('active', link.dataset.tab === tab);
+    });
     this.closeDrawer();
     this.render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -330,6 +336,9 @@ const app = {
         break;
       case 'record':
         container.innerHTML = this.renderRecordScreen();
+        break;
+      case 'assets':
+        container.innerHTML = this.renderAssetsScreen();
         break;
       case 'report':
         container.innerHTML = this.renderReportScreen();
@@ -455,19 +464,21 @@ const app = {
       </div>
 
       <!-- PERSONAL ASSETS SNAPSHOT -->
-      <div style="margin: 16px 2px 10px;">
-        <span style="font-size:0.75rem; font-weight:800; color:#64748B; letter-spacing:0.05em;">PERSONAL ASSETS DEPLOYED FOR BIZ</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin: 16px 2px 10px;">
+        <span style="font-size:0.75rem; font-weight:800; color:#64748B; letter-spacing:0.05em;">ASSETS &amp; VALUATION</span>
+        <button onclick="app.navigate('assets')" style="border:none; background:none; color:var(--royal-bright); font-size:0.78rem; font-weight:700; cursor:pointer;">Asset Register →</button>
       </div>
-      <div class="mobile-card" style="border-left: 4px solid #7C3AED;">
+      <div class="mobile-card" style="border-left: 4px solid #7C3AED; cursor:pointer;" onclick="app.navigate('assets')">
         <div class="m-card-header">
-          <span style="font-size:0.85rem; font-weight:700;">👤 Amos Personal Property</span>
-          <span class="m-badge purple">${personalAssets.length} Assets</span>
+          <span style="font-size:0.85rem; font-weight:700;">💼 Amos &amp; Business Assets</span>
+          <span class="m-badge purple">${assets.length} Total Assets</span>
         </div>
         <div style="font-size:0.8rem; color:#334155; margin-top:4px;">
           MacBook Pro M3, Toyota RAV4 Hybrid, and Starlink remain Amos's personal property while deployed for operations.
         </div>
-        <div style="font-size:0.75rem; color:#64748B; margin-top:6px;">
-          Combined Value: <strong>GH₵ ${this.fmt(c.amos_personal_assets_used_value)}</strong>
+        <div style="font-size:0.75rem; color:#64748B; margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
+          <span>Amos Personal: <strong style="color:#7C3AED;">GH₵ ${this.fmt(c.amos_personal_assets_used_value)}</strong></span>
+          <span>Biz Owned: <strong style="color:var(--royal-bright);">GH₵ ${this.fmt(c.business_owned_assets_value)}</strong></span>
         </div>
       </div>
     `;
@@ -1064,6 +1075,520 @@ const app = {
   setReportPeriod(period) {
     this.reportPeriod = period;
     this.render();
+  },
+
+  /* =====================================================================
+   * SCREEN: ASSET REGISTER & VALUATION (Module 6)
+   * Tracks Business-Owned vs Amos's Personal Assets Used by Businesses
+   * ===================================================================== */
+  setAssetFilter(filter) {
+    this.assetFilter = filter;
+    this.render();
+  },
+
+  setAssetUnitFilter(unitId) {
+    this.assetUnitFilter = unitId;
+    this.render();
+  },
+
+  setAssetSearch(query) {
+    this.assetSearchQuery = query;
+    this.render();
+  },
+
+  renderAssetsScreen() {
+    const assets = this.state.assets || [];
+    const units = this.state.businessUnits || [];
+    const c = this.state.computed?.consolidated || {};
+
+    const amosAssets = assets.filter((a) => a.legal_owner_type === 'AMOS_PERSONAL');
+    const bizAssets = assets.filter((a) => a.legal_owner_type !== 'AMOS_PERSONAL');
+
+    const totalPortfolioCost = assets.reduce((sum, a) => sum + Number(a.purchase_cost || 0), 0);
+    const totalPortfolioValue = assets.reduce(
+      (sum, a) => sum + Number(a.effective_value ?? a.computed_book_value ?? a.purchase_cost ?? 0),
+      0
+    );
+    const amosValue = amosAssets.reduce(
+      (sum, a) => sum + Number(a.effective_value ?? a.computed_book_value ?? a.purchase_cost ?? 0),
+      0
+    );
+    const bizValue = bizAssets.reduce(
+      (sum, a) => sum + Number(a.effective_value ?? a.computed_book_value ?? a.purchase_cost ?? 0),
+      0
+    );
+    const totalDepreciation = assets.reduce((sum, a) => sum + Number(a.accumulated_depreciation || 0), 0);
+
+    // Apply Filter by ownership
+    let filtered = [...assets];
+    if (this.assetFilter === 'AMOS_PERSONAL') {
+      filtered = filtered.filter((a) => a.legal_owner_type === 'AMOS_PERSONAL');
+    } else if (this.assetFilter === 'BUSINESS') {
+      filtered = filtered.filter((a) => a.legal_owner_type !== 'AMOS_PERSONAL');
+    }
+
+    // Apply Filter by business unit
+    if (this.assetUnitFilter !== 'ALL') {
+      filtered = filtered.filter((a) => Number(a.using_unit_id) === Number(this.assetUnitFilter));
+    }
+
+    // Apply Filter by search query
+    if (this.assetSearchQuery) {
+      const q = this.assetSearchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (a) =>
+          (a.name || '').toLowerCase().includes(q) ||
+          (a.asset_code || '').toLowerCase().includes(q) ||
+          (a.category || '').toLowerCase().includes(q) ||
+          (a.condition || '').toLowerCase().includes(q) ||
+          (a.using_unit_name || '').toLowerCase().includes(q)
+      );
+    }
+
+    return `
+      <!-- HERO BLUE SECTION -->
+      <section class="mobile-hero-banner" style="margin: 0 -14px 14px -14px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <h1 class="hero-title">💼 Asset Register</h1>
+            <p class="hero-subtitle">Parent: AmozTech • Amos Personal vs Business Assets</p>
+          </div>
+          <button class="header-orange-cta" style="font-size:0.75rem; padding:6px 12px;" onclick="app.openAddAssetModal()">
+            + Add Asset
+          </button>
+        </div>
+      </section>
+
+      <!-- SEPARATE ENTITY ASSET SAFEGUARD BANNER -->
+      <div class="fence-hero-card" style="margin-bottom:14px; background:linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%); border-color:#D8B4FE;">
+        <div class="fence-badge-title">
+          <span style="color:#6B21A8;">🛡️ SEPARATE ENTITY ASSET SAFEGUARD</span>
+          <span style="color:#7C3AED; font-weight:700;">Amos vs AmozTech</span>
+        </div>
+        <div style="font-size:0.8rem; color:#4C1D95; margin-top:4px; line-height:1.4;">
+          Personal assets owned by Amos (like his MacBook, RAV4, and Starlink) are legally protected and cannot be seized by company creditors. Business assets are capitalized under AmozTech Group.
+        </div>
+      </div>
+
+      <!-- 4 ASSET STAT CARDS (2x2 GRID) -->
+      <div class="asset-summary-grid">
+        <div class="asset-stat-card" style="border-left: 4px solid var(--royal-bright);">
+          <div class="asset-stat-label">Total Portfolio Value</div>
+          <div class="asset-stat-value">GH₵ ${this.fmt(totalPortfolioValue)}</div>
+          <div class="asset-stat-sub">${assets.length} Assets Registered</div>
+        </div>
+
+        <div class="asset-stat-card" style="border-left: 4px solid #7C3AED;">
+          <div class="asset-stat-label">Amos Personal Assets</div>
+          <div class="asset-stat-value" style="color:#6B21A8;">GH₵ ${this.fmt(amosValue)}</div>
+          <div class="asset-stat-sub">${amosAssets.length} Assets in Biz Custody</div>
+        </div>
+
+        <div class="asset-stat-card" style="border-left: 4px solid #04153B;">
+          <div class="asset-stat-label">Business-Owned Assets</div>
+          <div class="asset-stat-value">GH₵ ${this.fmt(bizValue)}</div>
+          <div class="asset-stat-sub">${bizAssets.length} Capitalized Assets</div>
+        </div>
+
+        <div class="asset-stat-card" style="border-left: 4px solid #F59E0B;">
+          <div class="asset-stat-label">Accum. Depreciation</div>
+          <div class="asset-stat-value" style="color:#D97706;">GH₵ ${this.fmt(totalDepreciation)}</div>
+          <div class="asset-stat-sub">Straight-Line Method</div>
+        </div>
+      </div>
+
+      <!-- FILTER TABS (ALL / AMOS PERSONAL / BUSINESS) -->
+      <div class="filter-pills-row" style="margin-bottom:10px;">
+        <button class="filter-pill ${this.assetFilter === 'ALL' ? 'active' : ''}" onclick="app.setAssetFilter('ALL')">
+          All Assets (${assets.length})
+        </button>
+        <button class="filter-pill ${this.assetFilter === 'AMOS_PERSONAL' ? 'active' : ''}" onclick="app.setAssetFilter('AMOS_PERSONAL')">
+          👤 Amos Personal (${amosAssets.length})
+        </button>
+        <button class="filter-pill ${this.assetFilter === 'BUSINESS' ? 'active' : ''}" onclick="app.setAssetFilter('BUSINESS')">
+          🏢 Business Owned (${bizAssets.length})
+        </button>
+      </div>
+
+      <!-- SEARCH & UNIT FILTER ROW -->
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <input
+          type="text"
+          placeholder="🔍 Search name, code, category..."
+          value="${this.escape(this.assetSearchQuery)}"
+          oninput="app.setAssetSearch(this.value)"
+          style="flex:1; padding:8px 12px; border:1px solid #CBD5E1; border-radius:10px; font-size:0.8rem; font-family:inherit; background:#FFFFFF;"
+        />
+        <select
+          onchange="app.setAssetUnitFilter(this.value)"
+          style="padding:8px; border:1px solid #CBD5E1; border-radius:10px; font-size:0.78rem; font-family:inherit; background:#FFFFFF; color:#334155;"
+        >
+          <option value="ALL" ${this.assetUnitFilter === 'ALL' ? 'selected' : ''}>All Units</option>
+          ${units.map((u) => `<option value="${u.id}" ${Number(this.assetUnitFilter) === Number(u.id) ? 'selected' : ''}>${this.escape(u.name)}</option>`).join('')}
+        </select>
+      </div>
+
+      <!-- ASSET CARDS LIST -->
+      <div>
+        ${
+          filtered.length === 0
+            ? `
+          <div class="mobile-card" style="text-align:center; padding:28px 14px; color:#64748B;">
+            <div style="font-size:2rem; margin-bottom:6px;">💼</div>
+            <strong>No assets found matching criteria</strong>
+            <p style="font-size:0.75rem; margin-top:4px;">Try clearing filters or tap "+ Add Asset" above.</p>
+          </div>
+        `
+            : filtered
+                .map((a) => {
+                  const isAmos = a.legal_owner_type === 'AMOS_PERSONAL';
+                  const bookVal = Number(a.effective_value ?? a.computed_book_value ?? a.purchase_cost ?? 0);
+                  const cost = Number(a.purchase_cost || 0);
+                  const accDep = Number(a.accumulated_depreciation || 0);
+                  const annDep = Number(a.annual_depreciation || 0);
+                  const unitName = a.using_unit_name || units.find((u) => Number(u.id) === Number(a.using_unit_id))?.name || 'AmozTech HQ';
+
+                  return `
+            <div class="mobile-card" style="border-left: 4px solid ${isAmos ? '#7C3AED' : 'var(--royal-bright)'}; margin-bottom:12px;">
+              <div class="m-card-header">
+                <div>
+                  <strong style="font-size:0.92rem; color:#0F172A;">${this.escape(a.name)}</strong>
+                  <div style="font-size:0.72rem; color:#64748B; margin-top:2px;">
+                    Tag: <strong>${this.escape(a.asset_code || 'AST-???')}</strong> • ${this.escape(a.category || 'Tech & Equipment')}
+                  </div>
+                </div>
+                <span class="asset-owner-pill ${isAmos ? 'amos' : 'biz'}">
+                  ${isAmos ? '👤 Amos Personal' : '🏢 Biz Owned'}
+                </span>
+              </div>
+
+              <!-- METRIC GRID -->
+              <div class="asset-metric-grid">
+                <div class="asset-metric-item">
+                  <span>Using Unit</span>
+                  <span>${this.escape(unitName)}</span>
+                </div>
+                <div class="asset-metric-item">
+                  <span>Condition</span>
+                  <span style="color:#059669;">${this.escape(a.condition || 'Good')}</span>
+                </div>
+                <div class="asset-metric-item">
+                  <span>Purchase Cost</span>
+                  <span>GH₵ ${this.fmt(cost)}</span>
+                </div>
+                <div class="asset-metric-item">
+                  <span>Current Book Val</span>
+                  <span style="color:${isAmos ? '#6B21A8' : 'var(--royal-bright)'};">GH₵ ${this.fmt(bookVal)}</span>
+                </div>
+                <div class="asset-metric-item">
+                  <span>Depreciation</span>
+                  <span>GH₵ ${this.fmt(accDep)}</span>
+                </div>
+                <div class="asset-metric-item">
+                  <span>Useful Life</span>
+                  <span>${a.useful_life_years || 3} yrs (GH₵ ${this.fmt(annDep)}/yr)</span>
+                </div>
+              </div>
+
+              <!-- LEGAL SEPARATE ENTITY NOTICE -->
+              ${
+                isAmos
+                  ? `
+                <div class="asset-legal-fence-box">
+                  🛡️ <strong>Amos Personal Property:</strong> Deployed for ${this.escape(unitName)} operations. Amos retains 100% individual legal title. Protected from business debt/insolvency.
+                </div>
+              `
+                  : `
+                <div class="asset-corp-fence-box">
+                  🏢 <strong>AmozTech Fixed Asset:</strong> Capitalized on group balance sheet. Depreciated straight-line against corporate taxes.
+                </div>
+              `
+              }
+
+              <div style="margin-top:10px; display:flex; justify-content:flex-end;">
+                <button class="btn-m-settle" onclick="app.openAssetDetailModal(${a.id})">
+                  View Full Schedule &amp; Details →
+                </button>
+              </div>
+            </div>
+          `;
+                })
+                .join('')
+        }
+      </div>
+    `;
+  },
+
+  /* =====================================================================
+   * ASSET MODALS (Register New Asset & View Schedule)
+   * ===================================================================== */
+  openAddAssetModal() {
+    const units = this.state.businessUnits || [];
+    const title = document.getElementById('modalTitle');
+    const body = document.getElementById('modalBody');
+    const backdrop = document.getElementById('appModalBackdrop');
+
+    title.textContent = '➕ Register New Asset';
+    body.innerHTML = `
+      <form onsubmit="app.submitNewAsset(event)">
+        <div class="waka-field" style="margin-bottom:12px;">
+          <div class="waka-label">ASSET NAME *</div>
+          <input type="text" id="newAssetName" required placeholder="e.g. MacBook Pro M3, Starlink Kit, Delivery Van" />
+        </div>
+
+        <div class="waka-field" style="margin-bottom:12px;">
+          <div class="waka-label">LEGAL OWNERSHIP (SEPARATE ENTITY) *</div>
+          <select id="newAssetOwnerType" required>
+            <option value="AMOS_PERSONAL">👤 Amos (Personal Property - Used by Biz)</option>
+            <option value="BUSINESS">🏢 AmozTech Group (Business Owned Fixed Asset)</option>
+          </select>
+        </div>
+
+        <div class="waka-field" style="margin-bottom:12px;">
+          <div class="waka-label">ASSIGNED BUSINESS UNIT *</div>
+          <select id="newAssetUnitId" required>
+            ${units.map((u) => `<option value="${u.id}">${this.escape(u.name)} (${u.is_parent ? 'Parent' : u.code})</option>`).join('')}
+          </select>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+          <div class="waka-field">
+            <div class="waka-label">PURCHASE COST (GH₵) *</div>
+            <input type="number" step="0.01" min="1" id="newAssetCost" required placeholder="0.00" />
+          </div>
+          <div class="waka-field">
+            <div class="waka-label">SALVAGE VALUE (GH₵)</div>
+            <input type="number" step="0.01" min="0" id="newAssetSalvage" value="0" />
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+          <div class="waka-field">
+            <div class="waka-label">PURCHASE DATE *</div>
+            <input type="date" id="newAssetDate" value="${new Date().toISOString().slice(0, 10)}" required />
+          </div>
+          <div class="waka-field">
+            <div class="waka-label">USEFUL LIFE (YEARS)</div>
+            <input type="number" min="1" max="50" id="newAssetLife" value="3" required />
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+          <div class="waka-field">
+            <div class="waka-label">CATEGORY</div>
+            <select id="newAssetCategory">
+              <option value="Computing & Engineering">Computing & Tech</option>
+              <option value="Vehicles & Mobility">Vehicles & Mobility</option>
+              <option value="Power & Connectivity">Power & Connectivity</option>
+              <option value="POS & NFC Terminals">POS & Terminals</option>
+              <option value="Office Equipment">Office Equipment</option>
+              <option value="Other Asset">Other Asset</option>
+            </select>
+          </div>
+          <div class="waka-field">
+            <div class="waka-label">CONDITION</div>
+            <select id="newAssetCondition">
+              <option value="Excellent">Excellent</option>
+              <option value="Good">Good</option>
+              <option value="Fair">Fair</option>
+              <option value="Needs Maintenance">Needs Maintenance</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="waka-field" style="margin-bottom:12px;">
+          <div class="waka-label">SERIAL NUMBER / ASSET TAG</div>
+          <input type="text" id="newAssetSerial" placeholder="e.g. SN-984210" />
+        </div>
+
+        <div class="waka-field" style="margin-bottom:14px;">
+          <div class="waka-label">DESCRIPTION / NOTES</div>
+          <input type="text" id="newAssetNotes" placeholder="Operational details, location, etc." />
+        </div>
+
+        <div style="background:#F0FDF4; border:1px solid #86EFAC; border-radius:10px; padding:10px; margin-bottom:14px; font-size:0.75rem; color:#166534;">
+          💡 <strong>Separate Entity Rule:</strong> If selected as Amos Personal, the asset remains Amos's legal property and does not form part of company liquidation assets.
+        </div>
+
+        <button type="submit" class="waka-submit-pill" style="width:100%;">
+          Register Asset in AC
+        </button>
+      </form>
+    `;
+    backdrop.classList.remove('hidden');
+  },
+
+  async submitNewAsset(e) {
+    e.preventDefault();
+    const name = document.getElementById('newAssetName').value.trim();
+    const ownerType = document.getElementById('newAssetOwnerType').value;
+    const unitId = Number(document.getElementById('newAssetUnitId').value);
+    const cost = Number(document.getElementById('newAssetCost').value);
+    const salvage = Number(document.getElementById('newAssetSalvage').value || 0);
+    const purchaseDate = document.getElementById('newAssetDate').value;
+    const lifeYears = Number(document.getElementById('newAssetLife').value || 3);
+    const category = document.getElementById('newAssetCategory').value;
+    const condition = document.getElementById('newAssetCondition').value;
+    const serial = document.getElementById('newAssetSerial').value.trim();
+    const notes = document.getElementById('newAssetNotes').value.trim();
+
+    if (!name || cost <= 0) {
+      this.toast('Please provide a valid asset name and cost', true);
+      return;
+    }
+
+    const payload = {
+      name,
+      legal_owner_type: ownerType,
+      legal_owner_name: ownerType === 'AMOS_PERSONAL' ? 'Amos (Founder & CEO)' : 'AmozTech Group',
+      using_unit_id: unitId,
+      category,
+      purchase_cost: cost,
+      purchase_date: purchaseDate,
+      useful_life_years: lifeYears,
+      salvage_value: salvage,
+      condition,
+      depreciation_method: 'STRAIGHT_LINE',
+      serial_number: serial,
+      notes,
+      actor: 'Amos (Owner)'
+    };
+
+    // 1. Try sending to server if online
+    try {
+      await fetch('/api/assets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.log('Server offline; recording asset locally in offline register...');
+    }
+
+    // 2. Client-side local update (works completely offline)
+    const unit = this.state.businessUnits?.find((u) => Number(u.id) === Number(unitId)) || { name: 'AmozTech HQ' };
+    const nextCount = (this.state.assets?.length || 0) + 1;
+    const depreciableBase = Math.max(0, cost - salvage);
+    const annDep = lifeYears > 0 ? Math.round((depreciableBase / lifeYears) * 100) / 100 : 0;
+
+    const newAsset = {
+      id: Date.now(),
+      asset_code: `AST-00${nextCount}`,
+      name,
+      category,
+      purchase_cost: cost,
+      salvage_value: salvage,
+      useful_life_years: lifeYears,
+      current_value: cost,
+      legal_owner_type: ownerType,
+      legal_owner_name: ownerType === 'AMOS_PERSONAL' ? 'Amos (Personal)' : 'AmozTech Group',
+      using_unit_id: unitId,
+      using_unit_name: unit.name,
+      acquisition_mode: ownerType === 'AMOS_PERSONAL' ? 'PERSONAL_USE' : 'DIRECT_PURCHASE',
+      purchase_date: purchaseDate,
+      condition,
+      depreciation_method: 'STRAIGHT_LINE',
+      serial_number: serial,
+      notes,
+      effective_value: cost,
+      annual_depreciation: annDep,
+      accumulated_depreciation: 0,
+      computed_book_value: cost
+    };
+
+    if (window.accountingEngine && window.accountingEngine.calculateAssetValuation) {
+      const valued = window.accountingEngine.calculateAssetValuation(newAsset);
+      Object.assign(newAsset, valued);
+    }
+
+    if (!this.state.assets) this.state.assets = [];
+    this.state.assets.unshift(newAsset);
+    this.recomputeState();
+    localStorage.setItem('ac_saved_state', JSON.stringify(this.state));
+
+    this.closeModal();
+    this.toast(`Asset "${name}" registered successfully!`);
+    this.render();
+  },
+
+  openAssetDetailModal(assetId) {
+    const asset = this.state.assets?.find((a) => Number(a.id) === Number(assetId));
+    if (!asset) return;
+
+    const isAmos = asset.legal_owner_type === 'AMOS_PERSONAL';
+    const unitName = asset.using_unit_name || this.state.businessUnits?.find((u) => Number(u.id) === Number(asset.using_unit_id))?.name || 'AmozTech HQ';
+    const cost = Number(asset.purchase_cost || 0);
+    const bookVal = Number(asset.effective_value ?? asset.computed_book_value ?? asset.purchase_cost ?? 0);
+    const accDep = Number(asset.accumulated_depreciation || 0);
+    const annDep = Number(asset.annual_depreciation || 0);
+
+    const title = document.getElementById('modalTitle');
+    const body = document.getElementById('modalBody');
+    const backdrop = document.getElementById('appModalBackdrop');
+
+    title.textContent = `💼 ${asset.asset_code || 'Asset'}: ${asset.name}`;
+    body.innerHTML = `
+      <div style="font-size:0.85rem; color:#334155; line-height:1.5;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <span class="asset-owner-pill ${isAmos ? 'amos' : 'biz'}" style="font-size:0.8rem; padding:4px 10px;">
+            ${isAmos ? '👤 Amos Personal Property' : '🏢 AmozTech Owned Fixed Asset'}
+          </span>
+          <span class="m-badge green">${this.escape(asset.condition || 'Good')}</span>
+        </div>
+
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:12px; margin-bottom:14px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.78rem;">
+            <div>Original Cost: <strong>GH₵ ${this.fmt(cost)}</strong></div>
+            <div>Current Value: <strong style="color:${isAmos ? '#6B21A8' : 'var(--royal-bright)'};">GH₵ ${this.fmt(bookVal)}</strong></div>
+            <div>Accum. Depr: <strong style="color:#D97706;">GH₵ ${this.fmt(accDep)}</strong></div>
+            <div>Annual Depr: <strong>GH₵ ${this.fmt(annDep)} / yr</strong></div>
+            <div>Useful Life: <strong>${asset.useful_life_years || 3} Years</strong></div>
+            <div>Salvage Value: <strong>GH₵ ${this.fmt(asset.salvage_value || 0)}</strong></div>
+            <div>Acquired: <strong>${asset.purchase_date || 'N/A'}</strong></div>
+            <div>Assigned To: <strong>${this.escape(unitName)}</strong></div>
+          </div>
+        </div>
+
+        ${
+          asset.serial_number
+            ? `
+          <div style="font-size:0.75rem; color:#64748B; margin-bottom:8px;">
+            Serial / Tag: <strong style="color:#1E293B;">${this.escape(asset.serial_number)}</strong>
+          </div>
+        `
+            : ''
+        }
+
+        ${
+          asset.notes
+            ? `
+          <div style="font-size:0.78rem; background:#F1F5F9; padding:8px 10px; border-radius:8px; margin-bottom:12px;">
+            <strong>Notes:</strong> ${this.escape(asset.notes)}
+          </div>
+        `
+            : ''
+        }
+
+        ${
+          isAmos
+            ? `
+          <div class="asset-legal-fence-box" style="margin-bottom:14px;">
+            🛡️ <strong>Legal Ownership Fence:</strong> Under corporate and insolvency law, this asset belongs to Amos personally. AmozTech and its sub-units hold user custody under license, so creditors cannot touch this property.
+          </div>
+        `
+            : `
+          <div class="asset-corp-fence-box" style="margin-bottom:14px;">
+            🏢 <strong>Corporate Balance Sheet:</strong> This asset is property of AmozTech Group. Its capital value is amortized over its useful life and appears in group balance sheet reporting.
+          </div>
+        `
+        }
+
+        <button onclick="app.closeModal()" class="waka-submit-pill" style="width:100%;">
+          Close Details
+        </button>
+      </div>
+    `;
+    backdrop.classList.remove('hidden');
   },
 
   /* =====================================================================

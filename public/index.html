@@ -76,6 +76,47 @@
         </div>
         <div class="drawer-body">
           <div class="drawer-section">
+            <div class="drawer-section-title">PAGES &amp; NAVIGATION</div>
+            <div class="drawer-nav-list">
+              <button class="drawer-page-link active" data-tab="dashboard" onclick="app.navigate('dashboard'); app.closeDrawer();">
+                <span class="drawer-page-icon">📊</span>
+                <div class="drawer-page-meta">
+                  <div class="drawer-page-name">Dashboard</div>
+                  <div class="drawer-page-desc">Overview &amp; Unit Balances</div>
+                </div>
+              </button>
+              <button class="drawer-page-link" data-tab="record" onclick="app.navigate('record'); app.closeDrawer();">
+                <span class="drawer-page-icon">➕</span>
+                <div class="drawer-page-meta">
+                  <div class="drawer-page-name">Record Transaction</div>
+                  <div class="drawer-page-desc">Owner Loans, Reimb, Expenses</div>
+                </div>
+              </button>
+              <button class="drawer-page-link" data-tab="assets" onclick="app.navigate('assets'); app.closeDrawer();">
+                <span class="drawer-page-icon">💼</span>
+                <div class="drawer-page-meta">
+                  <div class="drawer-page-name">Asset Register</div>
+                  <div class="drawer-page-desc">Amos Personal vs Biz Assets</div>
+                </div>
+              </button>
+              <button class="drawer-page-link" data-tab="report" onclick="app.navigate('report'); app.closeDrawer();">
+                <span class="drawer-page-icon">📑</span>
+                <div class="drawer-page-meta">
+                  <div class="drawer-page-name">Reports &amp; Statements</div>
+                  <div class="drawer-page-desc">P&amp;L, Balance Sheet, Categories</div>
+                </div>
+              </button>
+              <button class="drawer-page-link" data-tab="activity" onclick="app.navigate('activity'); app.closeDrawer();">
+                <span class="drawer-page-icon">⚖️</span>
+                <div class="drawer-page-meta">
+                  <div class="drawer-page-name">Fence &amp; Ledger</div>
+                  <div class="drawer-page-desc">Settlements &amp; Audit Trail</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div class="drawer-section">
             <div class="drawer-section-title">MOBILE INSTALLATION</div>
             <a href="/AC.apk" download="AC.apk" class="drawer-action-btn primary" style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px;">
               <span>🤖</span> <strong>Download Android APK (Direct)</strong>
@@ -139,13 +180,17 @@
         <span class="b-icon">➕</span>
         <span class="b-label">Record</span>
       </button>
+      <button class="bottom-tab-btn" data-tab="assets" onclick="app.navigate('assets')">
+        <span class="b-icon">💼</span>
+        <span class="b-label">Assets</span>
+      </button>
       <button class="bottom-tab-btn" data-tab="report" onclick="app.navigate('report')">
         <span class="b-icon">📑</span>
         <span class="b-label">Report</span>
       </button>
       <button class="bottom-tab-btn" data-tab="activity" onclick="app.navigate('activity')">
         <span class="b-icon">⚖️</span>
-        <span class="b-label">Fence & Ledger</span>
+        <span class="b-label">Fence</span>
       </button>
     </nav>
   </div>
