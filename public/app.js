@@ -123,8 +123,8 @@ const app = {
         <div style="background:#F0FDF4; border:1px solid #86EFAC; border-radius:10px; padding:12px; margin-bottom:14px; text-align:center;">
           <div style="font-weight:700; color:#166534; font-size:0.95rem; margin-bottom:4px;">Direct Android APK Download</div>
           <div style="font-size:0.78rem; color:#15803D; margin-bottom:10px;">Native compiled APK ready for standalone installation on Android devices:</div>
-          <a href="/AC.apk" download="AC.apk" class="waka-submit-pill" style="display:inline-block; text-decoration:none; padding:10px 18px; font-size:0.85rem; width:100%; box-sizing:border-box;">
-            📥 Download AC.apk (1.4 MB)
+          <a href="https://github.com/amosyeboah/AC_Amoztech/releases/download/v1.0.0/AC.apk" download="AC.apk" class="waka-submit-pill" style="display:inline-block; text-decoration:none; padding:10px 18px; font-size:0.85rem; width:100%; box-sizing:border-box;">
+            🤖 Download AC.apk (8.3 MB)
           </a>
         </div>
 
@@ -490,7 +490,11 @@ const app = {
           <span class="m-badge purple">${assets.length} Total Assets</span>
         </div>
         <div style="font-size:0.8rem; color:#334155; margin-top:4px;">
-          MacBook Pro M3, Toyota RAV4 Hybrid, and Starlink remain Amos's personal property while deployed for operations.
+          ${
+            assets.length > 0
+              ? 'Track business fixed assets vs Amos personal property in business custody.'
+              : 'No assets registered yet. Tap to track company hardware, vehicles, and equipment.'
+          }
         </div>
         <div style="font-size:0.75rem; color:#64748B; margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
           <span>Amos Personal: <strong style="color:#7C3AED;">GH₵ ${this.fmt(c.amos_personal_assets_used_value)}</strong></span>
@@ -699,7 +703,13 @@ const app = {
         <button onclick="app.navigate('activity')" style="border:none; background:none; color:var(--royal-bright); font-size:0.78rem; font-weight:700; cursor:pointer;">See all →</button>
       </div>
       <div>
-        ${this.state.transactions.slice(0, 3).map((tx) => this.renderMobileTxCard(tx)).join('')}
+        ${
+          (this.state.transactions || []).length === 0
+            ? `<div class="mobile-card" style="text-align:center; padding:18px; color:#64748B; font-size:0.8rem;">
+                 No transactions recorded yet. Fill out the form above to record your first entry.
+               </div>`
+            : this.state.transactions.slice(0, 3).map((tx) => this.renderMobileTxCard(tx)).join('')
+        }
       </div>
     `;
   },
@@ -906,10 +916,13 @@ const app = {
           </div>
 
           <div style="display:flex; flex-direction:column; gap:12px;">
-            ${sortedExpenses
-              .map(([cat, amt]) => {
-                const pct = totalOpEx > 0 ? Math.round((amt / totalOpEx) * 100) : 0;
-                return `
+            ${
+              sortedExpenses.length === 0
+                ? `<div style="font-size:0.78rem; color:#64748B; padding:8px 0; text-align:center;">No spending entries recorded in this period.</div>`
+                : sortedExpenses
+                    .map(([cat, amt]) => {
+                      const pct = totalOpEx > 0 ? Math.round((amt / totalOpEx) * 100) : 0;
+                      return `
                 <div>
                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700;">
                     <span>${this.escape(cat)}</span>
@@ -920,8 +933,9 @@ const app = {
                   </div>
                 </div>
               `;
-              })
-              .join('')}
+                    })
+                    .join('')
+            }
           </div>
         </div>
 
@@ -932,10 +946,13 @@ const app = {
           </div>
 
           <div style="display:flex; flex-direction:column; gap:12px;">
-            ${sortedRevenues
-              .map(([cat, amt]) => {
-                const pct = totalRev > 0 ? Math.round((amt / totalRev) * 100) : 0;
-                return `
+            ${
+              sortedRevenues.length === 0
+                ? `<div style="font-size:0.78rem; color:#64748B; padding:8px 0; text-align:center;">No revenue entries recorded in this period.</div>`
+                : sortedRevenues
+                    .map(([cat, amt]) => {
+                      const pct = totalRev > 0 ? Math.round((amt / totalRev) * 100) : 0;
+                      return `
                 <div>
                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700;">
                     <span>${this.escape(cat)}</span>
@@ -946,8 +963,9 @@ const app = {
                   </div>
                 </div>
               `;
-              })
-              .join('')}
+                    })
+                    .join('')
+            }
           </div>
         </div>
 
@@ -957,16 +975,20 @@ const app = {
           </div>
 
           <div style="display:flex; flex-direction:column; gap:8px;">
-            ${sortedOwner
-              .map(
-                ([cat, amt]) => `
+            ${
+              sortedOwner.length === 0
+                ? `<div style="font-size:0.78rem; color:#64748B; padding:8px 0; text-align:center;">No owner capital, loans, or repayments recorded yet.</div>`
+                : sortedOwner
+                    .map(
+                      ([cat, amt]) => `
               <div style="display:flex; justify-content:space-between; font-size:0.8rem; padding:6px 0; border-bottom:1px solid #F1F5F9;">
                 <span><strong>${this.escape(cat)}</strong></span>
                 <span style="font-weight:700;">GH₵ ${this.fmt(amt)}</span>
               </div>
             `
-              )
-              .join('')}
+                    )
+                    .join('')
+            }
           </div>
         </div>
       `
@@ -1765,7 +1787,20 @@ const app = {
         <button onclick="app.exportExcelCsv()" style="border:none; background:none; color:var(--royal-bright); font-weight:700; cursor:pointer;">Export Excel (CSV) 📥</button>
       </div>
 
-      ${txs.map((tx) => this.renderMobileTxCard(tx)).join('')}
+      ${
+        txs.length === 0
+          ? `
+        <div class="mobile-card" style="text-align:center; padding:28px 14px; color:#64748B;">
+          <div style="font-size:2rem; margin-bottom:6px;">⚖️</div>
+          <strong>No transactions in ledger yet</strong>
+          <p style="font-size:0.75rem; margin-top:4px;">Ready for your real entries. Tap "+ Record" to record your first loan, payment, or expense.</p>
+          <button class="header-orange-cta" style="margin-top:10px; display:inline-block;" onclick="app.navigate('record')">
+            + Record First Transaction
+          </button>
+        </div>
+      `
+          : txs.map((tx) => this.renderMobileTxCard(tx)).join('')
+      }
     `;
   },
 

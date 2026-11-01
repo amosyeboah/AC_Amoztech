@@ -1,7 +1,7 @@
 {
   "name": "AC Financial Management",
   "short_name": "AC",
-  "description": "Separate Entity Financial Management & Accounting Fence for Amos (AC Group)",
+  "description": "Separate Entity Financial Management & Accounting Fence for Amos (AmozTech Group)",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -35,6 +35,13 @@
       "short_name": "Record",
       "description": "Quickly record a payment or loan",
       "url": "/#record",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Asset Register",
+      "short_name": "Assets",
+      "description": "Track business and personal assets",
+      "url": "/#assets",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
